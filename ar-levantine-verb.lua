@@ -100,7 +100,6 @@ end
 
 local EMPHATICS = set({'ط', 'ص', 'ق', 'ض', 'ظ'})  -- these cause backing of alif
 local LOWERING_CONSONANTS = set({'ق', 'ر', 'ح', 'ع', 'خ', 'غ'})  -- these turn alif into /a/
-local RAISING_BLOCKING_CONSONANTS = set({'غ', 'ه', 'ق'})  -- these prevent alif from raising, leaving it /æ/
 local IMPOSSIBLE_COMBINATIONS = {'qaː', 'ʔαː'}  -- to be pattern-matched
 
 
@@ -125,22 +124,18 @@ local function clear_table(t)
 end
 
 
-local function determine_emphasis_level(c, chars)
-    local level = 0
+local function determine_emphasis_level(c, chars, level)
     if c == 'ي' then
         level = 0
         clear_table(chars)
     else
         if EMPHATICS[c] then
             level = 3
-            chars[1+#chars] = 'α'
+            chars[1+#chars] = 'A'  -- α
         end
         if LOWERING_CONSONANTS[c] then
             level = 2
             chars[1+#chars] = 'a'
-        end
-        if RAISING_BLOCKING_CONSONANTS[c] then
-            level = 1
         end
     end
     return level
@@ -149,11 +144,21 @@ end
 
 local function determine_emphasis_environment(word, alif_index)
     local left_level, right_level, chars = 0, 0, {}, {}
-    for i = 1, alif_index - 1 do
-        left_level = determine_emphasis_level(word:sub(i, i), chars)
+    local i = 1
+    for v in string.gmatch(word, "([%z\1-\127\194-\244][\128-\191]*)") do
+        i = i + 1
+        if i == alif_index then
+            break
+        end
+        left_level = determine_emphasis_level(v, chars, left_level)
     end
-    for i = #word, alif_index + 1, -1 do
-        right_level = determine_emphasis_level(word:sub(i, i), chars)
+    i = #word
+    for v in string.gmatch(word, "([%z\1-\127\194-\244][\128-\191]*)") do
+        i = i - 1
+        if i == alif_index then
+            break
+        end
+        right_level = determine_emphasis_level(v, chars, right_level)
     end
     return left_level, right_level, chars
 end
@@ -204,7 +209,7 @@ function exports.IPA(frame)
                 local left_level, right_level, chars = determine_emphasis_environment(word, index)
                 local charset, chars = set(chars), {}
                 if right_level == 0 and left_level < 2 then
-                    charset['e_o'] = not RAISING_BLOCKING_CONSONANTS[prev_char] -- e̞
+                    charset['e_o'] = true -- e̞
                     charset['{'] = true  -- æ
                 end
                 for k, _ in pairs(charset) do
