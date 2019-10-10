@@ -6,7 +6,7 @@
 local exports = {}
 local default = false
 
-local IPA_MAP = {
+--[[local IPA_MAP = {
     -- ا should be processed specially
     ['َ'] = {[default]={'a'}},
     ['ِ'] = {[default]={'i'}},
@@ -39,12 +39,53 @@ local IPA_MAP = {
     ['ش'] = {[default]={'ʃ'}},
     ['ت'] = {[default]={'t'}},
     ['ث'] = {[default]={'s'}},  -- /θ/ is rare enough not to be worth recording. /t/ should be written ت
-    ['خ'] = {[default]={'ð'}},
+    ['خ'] = {[default]={'x'}},
     ['ذ'] = {[default]={'z'}},  -- /ð/ is rare enough not to be worth recording. /d/ should be written د
     ['ض'] = {[default]={'dˤ'}},
     ['ظ'] = {[default]={'zˤ'}},  -- /ðˤ/ is rare enough not to be worth recording
     ['غ'] = {[default]={'ɣ'}},
     ['ة'] = {[default]={'a', 'e̞'}, ['ِ']={'e̞'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
+}]]
+
+local IPA_MAP = {
+    -- ا should be processed specially
+    ['َ'] = {[default]={'a'}},
+    ['ِ'] = {[default]={'i'}},
+    ['ُ'] = {[default]={'u'}},
+    ['ئ'] = {[default]={'?'}},
+    ['ؤ'] = {[default]={'?'}},
+    ['ء'] = {[default]={'?'}},
+    ['إ'] = {[default]={'?i'}},
+    ['آ'] = {[default]={'?a:'}},
+    ['أ'] = {[default]={'?'}},
+    ['ب'] = {[default]={'b'}},
+    ['ج'] = {[default]={'Z', 'dZ'}},
+    ['د'] = {[default]={'d'}},
+    ['ه'] = {[default]={'h'}},
+    ['و'] = {[default]={'u:'}, ['#']={'w'}, ['ُ']={'u:'}, ['ِ']={'u:'}, ['َ']={'aw', 'o:'}},
+    ['ز'] = {[default]={'z'}},
+    ['ح'] = {[default]={'X\\'}},
+    ['ط'] = {[default]={'t_?\\'}},
+    ['ي'] = {[default]={'i:'}, ['#']={'y'}, ['ِ']={'i:'}, ['َ']={'ay', 'e_o:'}},
+    ['ك'] = {[default]={'k'}},
+    ['ل'] = {[default]={'l'}},
+    ['م'] = {[default]={'m'}},
+    ['ن'] = {[default]={'n'}},
+    ['س'] = {[default]={'s'}},
+    ['ع'] = {[default]={'?\\'}},
+    ['ف'] = {[default]={'f'}},
+    ['ص'] = {[default]={'s_?\\'}},
+    ['ق'] = {[default]={'?', 'q'}},
+    ['ر'] = {[default]={'4'}},
+    ['ش'] = {[default]={'S'}},
+    ['ت'] = {[default]={'t'}},
+    ['ث'] = {[default]={'s'}},  -- /T/ is rare enough not to be worth recording. /t/ should be written ت
+    ['خ'] = {[default]={'x'}},
+    ['ذ'] = {[default]={'z'}},  -- /D/ is rare enough not to be worth recording. /d/ should be written د
+    ['ض'] = {[default]={'d_?\\'}},
+    ['ظ'] = {[default]={'z_?\\'}},  -- x/D_?\/ is rare enough not to be worth recording
+    ['غ'] = {[default]={'G'}},
+    ['ة'] = {[default]={'a', 'e_o'}, ['ِ']={'e_o'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
 }
 
 
@@ -134,7 +175,6 @@ end
 
 function exports.IPA(frame)
     local args = get_frame_args(frame)
-    print(table_to_string(args))
     local word, verb_form = args[1], args[2]  -- verb form also tells us whether it's a verb or not
     local possibilities, prev_char = {}, '#'
     local index = 0
