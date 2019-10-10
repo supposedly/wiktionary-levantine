@@ -7,46 +7,47 @@ local infer_radicals = require('Module:ar-verb').infer_radicals
 local yesno = require('Module:yesno')
 
 local exports = {}
+local default = false
 
 local IPA_MAP = {
     -- ا should be processed specially
-    ['َ'] = {[nil]={'a'}},
-    ['ِ'] = {[nil]={'i'}},
-    ['ُ'] = {[nil]={'u'}},
-    ['ئ'] = {[nil]={'ʔ'}},
-    ['ؤ'] = {[nil]={'ʔ'}},
-    ['ء'] = {[nil]={'ʔ'}},
-    ['إ'] = {[nil]={'ʔi'}},
-    ['آ'] = {[nil]={'ʔaː'}},
-    ['أ'] = {[nil]={'ʔ'}},
-    ['ب'] = {[nil]={'b'}},
-    ['ج'] = {[nil]={'ʒ', 'd͡ʒ'}},
-    ['د'] = {[nil]={'d'}},
-    ['ه'] = {[nil]={'h'}},
-    ['و'] = {[nil]={'uː'}, ['#']={'w'}, ['ُ']={'uː'}, ['ِ']={'uː'}, ['َ']={'aw', 'oː'}},
-    ['ز'] = {[nil]={'z'}},
-    ['ح'] = {[nil]={'ħ'}},
-    ['ط'] = {[nil]={'tˤ'}},
-    ['ي'] = {[nil]={'iː'}, ['#']={'y'}, ['ِ']={'iː'}, ['َ']={'ay', 'e̞ː'}},
-    ['ك'] = {[nil]={'k'}},
-    ['ل'] = {[nil]={'l'}},
-    ['م'] = {[nil]={'m'}},
-    ['ن'] = {[nil]={'n'}},
-    ['س'] = {[nil]={'s'}},
-    ['ع'] = {[nil]={'ʕ'}},
-    ['ف'] = {[nil]={'f'}},
-    ['ص'] = {[nil]={'sˤ'}},
-    ['ق'] = {[nil]={'ʔ', 'q'}},
-    ['ر'] = {[nil]={'ɾ'}},
-    ['ش'] = {[nil]={'ʃ'}},
-    ['ت'] = {[nil]={'t'}},
-    ['ث'] = {[nil]={'s'}},  -- /θ/ is rare enough not to be worth recording. /t/ should be written ت
-    ['خ'] = {[nil]={'ð'}},
-    ['ذ'] = {[nil]={'z'}},  -- /ð/ is rare enough not to be worth recording. /d/ should be written د
-    ['ض'] = {[nil]={'dˤ'}},
-    ['ظ'] = {[nil]={'zˤ'}},  -- /ðˤ/ is rare enough not to be worth recording
-    ['غ'] = {[nil]={'ɣ'}},
-    ['ة'] = {[nil]={'a', 'e̞'}, ['ِ']={'e̞'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
+    ['َ'] = {[false]={'a'}},
+    ['ِ'] = {[false]={'i'}},
+    ['ُ'] = {[false]={'u'}},
+    ['ئ'] = {[false]={'ʔ'}},
+    ['ؤ'] = {[false]={'ʔ'}},
+    ['ء'] = {[false]={'ʔ'}},
+    ['إ'] = {[false]={'ʔi'}},
+    ['آ'] = {[false]={'ʔaː'}},
+    ['أ'] = {[false]={'ʔ'}},
+    ['ب'] = {[false]={'b'}},
+    ['ج'] = {[false]={'ʒ', 'd͡ʒ'}},
+    ['د'] = {[false]={'d'}},
+    ['ه'] = {[false]={'h'}},
+    ['و'] = {[false]={'uː'}, ['#']={'w'}, ['ُ']={'uː'}, ['ِ']={'uː'}, ['َ']={'aw', 'oː'}},
+    ['ز'] = {[false]={'z'}},
+    ['ح'] = {[false]={'ħ'}},
+    ['ط'] = {[false]={'tˤ'}},
+    ['ي'] = {[false]={'iː'}, ['#']={'y'}, ['ِ']={'iː'}, ['َ']={'ay', 'e̞ː'}},
+    ['ك'] = {[false]={'k'}},
+    ['ل'] = {[false]={'l'}},
+    ['م'] = {[false]={'m'}},
+    ['ن'] = {[false]={'n'}},
+    ['س'] = {[false]={'s'}},
+    ['ع'] = {[false]={'ʕ'}},
+    ['ف'] = {[false]={'f'}},
+    ['ص'] = {[false]={'sˤ'}},
+    ['ق'] = {[false]={'ʔ', 'q'}},
+    ['ر'] = {[false]={'ɾ'}},
+    ['ش'] = {[false]={'ʃ'}},
+    ['ت'] = {[false]={'t'}},
+    ['ث'] = {[false]={'s'}},  -- /θ/ is rare enough not to be worth recording. /t/ should be written ت
+    ['خ'] = {[false]={'ð'}},
+    ['ذ'] = {[false]={'z'}},  -- /ð/ is rare enough not to be worth recording. /d/ should be written د
+    ['ض'] = {[false]={'dˤ'}},
+    ['ظ'] = {[false]={'zˤ'}},  -- /ðˤ/ is rare enough not to be worth recording
+    ['غ'] = {[false]={'ɣ'}},
+    ['ة'] = {[false]={'a', 'e̞'}, ['ِ']={'e̞'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
 }
 
 
@@ -143,7 +144,7 @@ function exports.IPA(frame)
             if IPA_MAP[value][prev_char] ~= nil then
                 possibilities[1+#possibilities] = IPA_MAP[value][prev_char]
             else
-                possibilities[1+#possibilities] = IPA_MAP[value][nil]
+                possibilities[1+#possibilities] = IPA_MAP[value][false]
             end
         elseif value == 'ا' then
             if prev_char == '#' then  -- word boundary aka beginning of word
@@ -177,6 +178,7 @@ function exports.IPA(frame)
         -- TODO: INSERT VARIANT STRESS MARKERS RIGHT HERE
         final[i] = '/' .. v .. '/'
     end
+    return final
 end
 
 
