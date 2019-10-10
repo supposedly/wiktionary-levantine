@@ -11,6 +11,7 @@ local default = false
     ['َ'] = {[default]={'a'}},
     ['ِ'] = {[default]={'i'}},
     ['ُ'] = {[default]={'u'}},
+    ['ّ'] = {[default]={'ː'}},
     ['ئ'] = {[default]={'ʔ'}},
     ['ؤ'] = {[default]={'ʔ'}},
     ['ء'] = {[default]={'ʔ'}},
@@ -52,6 +53,7 @@ local IPA_MAP = {
     ['َ'] = {[default]={'a'}},
     ['ِ'] = {[default]={'i'}},
     ['ُ'] = {[default]={'u'}},
+    ['ّ'] = {[default]={':'}},
     ['ئ'] = {[default]={'?'}},
     ['ؤ'] = {[default]={'?'}},
     ['ء'] = {[default]={'?'}},
@@ -190,10 +192,11 @@ function exports.IPA(frame)
                 possibilities[1 + #possibilities] = appendee
             end
         elseif value == 'ا' then
+            possibilities[1 + #possibilities] = prev_output
             if prev_char == '#' then  -- word boundary aka beginning of word
                 if verb_form == nil then
                     -- if it's a noun then word-initial hamza-less alif represents /ʔi/
-                    possibilities[1+#possibilities] = {'ʔi'}
+                    prev_output = {'(?i)'}  -- ʔi
                     -- if it's a verb then the same alif represents a word-initial consonant cluster in Levantine
                     -- meaning nothing is to be prepended
                 end
@@ -201,13 +204,13 @@ function exports.IPA(frame)
                 local left_level, right_level, chars = determine_emphasis_environment(word, index)
                 local charset, chars = set(chars), {}
                 if right_level == 0 and left_level < 2 then
-                    charset['e̞'] = not RAISING_BLOCKING_CONSONANTS[prev_char]
-                    charset['æ'] = true
+                    charset['e_o'] = not RAISING_BLOCKING_CONSONANTS[prev_char] -- e̞
+                    charset['{'] = true  -- æ
                 end
-                for k, _ in pairs(chars) do
-                    chars[1 + #chars] = k .. 'ː'
+                for k, _ in pairs(charset) do
+                    chars[1 + #chars] = k .. ':'
                 end
-                possibilities[1+#possibilities] = chars
+                prev_output = chars
             end
         end
         prev_char = value
