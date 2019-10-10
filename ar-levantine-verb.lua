@@ -3,51 +3,48 @@
     PUBLIC REPO: https://github.com/supposedly/wiktionary-levantine
 --]]
 
-local infer_radicals = require('Module:ar-verb').infer_radicals
-local yesno = require('Module:yesno')
-
 local exports = {}
 local default = false
 
 local IPA_MAP = {
     -- ا should be processed specially
-    ['َ'] = {[false]={'a'}},
-    ['ِ'] = {[false]={'i'}},
-    ['ُ'] = {[false]={'u'}},
-    ['ئ'] = {[false]={'ʔ'}},
-    ['ؤ'] = {[false]={'ʔ'}},
-    ['ء'] = {[false]={'ʔ'}},
-    ['إ'] = {[false]={'ʔi'}},
-    ['آ'] = {[false]={'ʔaː'}},
-    ['أ'] = {[false]={'ʔ'}},
-    ['ب'] = {[false]={'b'}},
-    ['ج'] = {[false]={'ʒ', 'd͡ʒ'}},
-    ['د'] = {[false]={'d'}},
-    ['ه'] = {[false]={'h'}},
-    ['و'] = {[false]={'uː'}, ['#']={'w'}, ['ُ']={'uː'}, ['ِ']={'uː'}, ['َ']={'aw', 'oː'}},
-    ['ز'] = {[false]={'z'}},
-    ['ح'] = {[false]={'ħ'}},
-    ['ط'] = {[false]={'tˤ'}},
-    ['ي'] = {[false]={'iː'}, ['#']={'y'}, ['ِ']={'iː'}, ['َ']={'ay', 'e̞ː'}},
-    ['ك'] = {[false]={'k'}},
-    ['ل'] = {[false]={'l'}},
-    ['م'] = {[false]={'m'}},
-    ['ن'] = {[false]={'n'}},
-    ['س'] = {[false]={'s'}},
-    ['ع'] = {[false]={'ʕ'}},
-    ['ف'] = {[false]={'f'}},
-    ['ص'] = {[false]={'sˤ'}},
-    ['ق'] = {[false]={'ʔ', 'q'}},
-    ['ر'] = {[false]={'ɾ'}},
-    ['ش'] = {[false]={'ʃ'}},
-    ['ت'] = {[false]={'t'}},
-    ['ث'] = {[false]={'s'}},  -- /θ/ is rare enough not to be worth recording. /t/ should be written ت
-    ['خ'] = {[false]={'ð'}},
-    ['ذ'] = {[false]={'z'}},  -- /ð/ is rare enough not to be worth recording. /d/ should be written د
-    ['ض'] = {[false]={'dˤ'}},
-    ['ظ'] = {[false]={'zˤ'}},  -- /ðˤ/ is rare enough not to be worth recording
-    ['غ'] = {[false]={'ɣ'}},
-    ['ة'] = {[false]={'a', 'e̞'}, ['ِ']={'e̞'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
+    ['َ'] = {[default]={'a'}},
+    ['ِ'] = {[default]={'i'}},
+    ['ُ'] = {[default]={'u'}},
+    ['ئ'] = {[default]={'ʔ'}},
+    ['ؤ'] = {[default]={'ʔ'}},
+    ['ء'] = {[default]={'ʔ'}},
+    ['إ'] = {[default]={'ʔi'}},
+    ['آ'] = {[default]={'ʔaː'}},
+    ['أ'] = {[default]={'ʔ'}},
+    ['ب'] = {[default]={'b'}},
+    ['ج'] = {[default]={'ʒ', 'd͡ʒ'}},
+    ['د'] = {[default]={'d'}},
+    ['ه'] = {[default]={'h'}},
+    ['و'] = {[default]={'uː'}, ['#']={'w'}, ['ُ']={'uː'}, ['ِ']={'uː'}, ['َ']={'aw', 'oː'}},
+    ['ز'] = {[default]={'z'}},
+    ['ح'] = {[default]={'ħ'}},
+    ['ط'] = {[default]={'tˤ'}},
+    ['ي'] = {[default]={'iː'}, ['#']={'y'}, ['ِ']={'iː'}, ['َ']={'ay', 'e̞ː'}},
+    ['ك'] = {[default]={'k'}},
+    ['ل'] = {[default]={'l'}},
+    ['م'] = {[default]={'m'}},
+    ['ن'] = {[default]={'n'}},
+    ['س'] = {[default]={'s'}},
+    ['ع'] = {[default]={'ʕ'}},
+    ['ف'] = {[default]={'f'}},
+    ['ص'] = {[default]={'sˤ'}},
+    ['ق'] = {[default]={'ʔ', 'q'}},
+    ['ر'] = {[default]={'ɾ'}},
+    ['ش'] = {[default]={'ʃ'}},
+    ['ت'] = {[default]={'t'}},
+    ['ث'] = {[default]={'s'}},  -- /θ/ is rare enough not to be worth recording. /t/ should be written ت
+    ['خ'] = {[default]={'ð'}},
+    ['ذ'] = {[default]={'z'}},  -- /ð/ is rare enough not to be worth recording. /d/ should be written د
+    ['ض'] = {[default]={'dˤ'}},
+    ['ظ'] = {[default]={'zˤ'}},  -- /ðˤ/ is rare enough not to be worth recording
+    ['غ'] = {[default]={'ɣ'}},
+    ['ة'] = {[default]={'a', 'e̞'}, ['ِ']={'e̞'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
 }
 
 
@@ -137,14 +134,17 @@ end
 
 function exports.IPA(frame)
     local args = get_frame_args(frame)
+    print(table_to_string(args))
     local word, verb_form = args[1], args[2]  -- verb form also tells us whether it's a verb or not
     local possibilities, prev_char = {}, '#'
-    for index, value in str_ipairs(word) do
+    local index = 0
+    for value in string.gmatch(word, "([%z\1-\127\194-\244][\128-\191]*)") do
+        index = index + 1
         if IPA_MAP[value] ~= nil then
             if IPA_MAP[value][prev_char] ~= nil then
                 possibilities[1+#possibilities] = IPA_MAP[value][prev_char]
             else
-                possibilities[1+#possibilities] = IPA_MAP[value][false]
+                possibilities[1+#possibilities] = IPA_MAP[value][default]
             end
         elseif value == 'ا' then
             if prev_char == '#' then  -- word boundary aka beginning of word
@@ -156,13 +156,13 @@ function exports.IPA(frame)
                 end
             else
                 local left_level, right_level, chars = determine_emphasis_environment(word, index)
-                chars = set(chars)
+                local charset, chars = set(chars), {}
                 if right_level == 0 and left_level < 2 then
-                    chars['e̞'] = not RAISING_BLOCKING_CONSONANTS[prev_char]
-                    chars['æ'] = true
+                    charset['e̞'] = not RAISING_BLOCKING_CONSONANTS[prev_char]
+                    charset['æ'] = true
                 end
-                for k, v in pairs(chars) do
-                    chars[k] = v .. 'ː'
+                for k, _ in pairs(chars) do
+                    chars[1 + #chars] = k .. 'ː'
                 end
                 possibilities[1+#possibilities] = chars
             end
@@ -170,7 +170,7 @@ function exports.IPA(frame)
         prev_char = value
     end
     -- now go through all possibilities
-    local final = {possibilities[1]}
+    local final = possibilities[1]
     for i = 2, #possibilities do
         branch(final, possibilities[i])
     end
