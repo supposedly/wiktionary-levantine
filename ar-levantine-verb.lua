@@ -5,89 +5,84 @@
 
 local exports = {}
 local default = false
+local ipa
 
---[[local IPA_MAP = {
-    -- ا should be processed specially
-    ['َ'] = {[default]={'a'}},
-    ['ِ'] = {[default]={'i'}},
-    ['ُ'] = {[default]={'u'}},
-    ['ّ'] = {[default]={'ː'}},
-    ['ئ'] = {[default]={'ʔ'}},
-    ['ؤ'] = {[default]={'ʔ'}},
-    ['ء'] = {[default]={'ʔ'}},
-    ['إ'] = {[default]={'ʔi'}},
-    ['آ'] = {[default]={'ʔaː'}},
-    ['أ'] = {[default]={'ʔ'}},
-    ['ب'] = {[default]={'b'}},
-    ['ج'] = {[default]={'ʒ', 'd͡ʒ'}},
-    ['د'] = {[default]={'d'}},
-    ['ه'] = {[default]={'h'}},
-    ['و'] = {[default]={'uː'}, ['#']={'w'}, ['ُ']={'uː'}, ['ِ']={'uː'}, ['َ']={'aw', 'oː'}},
-    ['ز'] = {[default]={'z'}},
-    ['ح'] = {[default]={'ħ'}},
-    ['ط'] = {[default]={'tˤ'}},
-    ['ي'] = {[default]={'iː'}, ['#']={'j'}, ['ِ']={'iː'}, ['َ']={'aj', 'e̞ː'}},
-    ['ك'] = {[default]={'k'}},
-    ['ل'] = {[default]={'l'}},
-    ['م'] = {[default]={'m'}},
-    ['ن'] = {[default]={'n'}},
-    ['س'] = {[default]={'s'}},
-    ['ع'] = {[default]={'ʕ'}},
-    ['ف'] = {[default]={'f'}},
-    ['ص'] = {[default]={'sˤ'}},
-    ['ق'] = {[default]={'ʔ', 'q'}},
-    ['ر'] = {[default]={'ɾ'}},
-    ['ش'] = {[default]={'ʃ'}},
-    ['ت'] = {[default]={'t'}},
-    ['ث'] = {[default]={'s'}},  -- /θ/ is rare enough not to be worth recording. /t/ should be written ت
-    ['خ'] = {[default]={'x'}},
-    ['ذ'] = {[default]={'z'}},  -- /ð/ is rare enough not to be worth recording. /d/ should be written د
-    ['ض'] = {[default]={'dˤ'}},
-    ['ظ'] = {[default]={'zˤ'}},  -- /ðˤ/ is rare enough not to be worth recording
-    ['غ'] = {[default]={'ɣ'}},
-    ['ة'] = {[default]={'a', 'e̞'}, ['ِ']={'e̞'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
-}]]
+do 
+    local IPA_SYMBOLS = {
+        gem = 'ː',
+        tie='͡',
+        ph='ˤ',
+        alpha='α',
+        e_o='e̞',
+        ae='æ',
+        hamza='ʔ',
+        ayn='ʕ',
+        heth='ħ',
+        j='ʒ',
+        r='ɾ',
+        sh='ʃ',
+        gh='ɣ',
+    }
+
+    local X_SAMPA_SYMBOLS = {
+        gem = ':',
+        tie='',
+        ph='_?\\',
+        alpha='A',
+        e_o='e_o',
+        ae='{',
+        hamza='?',
+        ayn='?\\',
+        heth='X\\',
+        j='Z',
+        r='4',
+        sh='S',
+        gh='G',
+    }
+
+    ipa = X_SAMPA_SYMBOLS  -- change as needed
+end
 
 local IPA_MAP = {
     -- ا should be processed specially
     ['َ'] = {[default]={'a'}},
     ['ِ'] = {[default]={'i'}},
     ['ُ'] = {[default]={'u'}},
-    ['ّ'] = {[default]={':'}},
-    ['ئ'] = {[default]={'?'}},
-    ['ؤ'] = {[default]={'?'}},
-    ['ء'] = {[default]={'?'}},
-    ['إ'] = {[default]={'?i'}},
-    ['آ'] = {[default]={'?a:'}},
-    ['أ'] = {[default]={'?'}},
+    ['ّ'] = {[default]={ipa.gem}},
+    ['ئ'] = {[default]={ipa.hamza}},
+    ['ؤ'] = {[default]={ipa.hamza}},
+    ['ء'] = {[default]={ipa.hamza}},
+    ['إ'] = {[default]={ipa.hamza .. 'i'}},
+    ['آ'] = {[default]={ipa.hamza .. ipa.ae .. ipa.gem}},
+    ['أ'] = {[default]={ipa.hamza}},
     ['ب'] = {[default]={'b'}},
-    ['ج'] = {[default]={'Z', 'dZ'}},
+    ['ج'] = {[default]={ipa.j, 'd' .. ipa.tie .. ipa.j}},
     ['د'] = {[default]={'d'}},
     ['ه'] = {[default]={'h'}},
-    ['و'] = {[default]={'u:'}, ['#']={'w'}, ['ُ']={'u:'}, ['ِ']={'u:'}, ['َ']={'aw', 'o:'}},
+    ['و'] = {[default]={'u' .. ipa.gem}, ['#']={'w'}, ['ُ']={'u' .. ipa.gem}, ['ِ']={'u' .. ipa.gem}, ['َ']={'aw', 'o' .. ipa.gem}},
     ['ز'] = {[default]={'z'}},
-    ['ح'] = {[default]={'X\\'}},
-    ['ط'] = {[default]={'t_?\\'}},
-    ['ي'] = {[default]={'i:'}, ['#']={'j'}, ['ِ']={'i:'}, ['َ']={'aj', 'e_o:'}},
+    ['ح'] = {[default]={ipa.heth}},
+    ['ط'] = {[default]={'t' .. ipa.ph}},
+    ['ي'] = {[default]={'i' .. ipa.gem}, ['#']={'j'}, ['ِ']={'i' .. ipa.gem}, ['َ']={'aj', ipa.e_o .. ipa.gem}},
     ['ك'] = {[default]={'k'}},
     ['ل'] = {[default]={'l'}},
     ['م'] = {[default]={'m'}},
     ['ن'] = {[default]={'n'}},
     ['س'] = {[default]={'s'}},
-    ['ع'] = {[default]={'?\\'}},
+    ['ع'] = {[default]={ipa.ayn}},
     ['ف'] = {[default]={'f'}},
-    ['ص'] = {[default]={'s_?\\'}},
-    ['ق'] = {[default]={'?', 'q'}},
-    ['ر'] = {[default]={'4'}},
-    ['ش'] = {[default]={'S'}},
+    ['ص'] = {[default]={'s' .. ipa.gem}},
+    ['ق'] = {[default]={ipa.hamza, 'q'}},
+    ['ر'] = {[default]={ipa.r}},
+    ['ش'] = {[default]={ipa.sh}},
     ['ت'] = {[default]={'t'}},
     ['ث'] = {[default]={'s'}},  -- /T/ is rare enough not to be worth recording. /t/ should be written ت
     ['خ'] = {[default]={'x'}},
     ['ذ'] = {[default]={'z'}},  -- /D/ is rare enough not to be worth recording. /d/ should be written د
-    ['ض'] = {[default]={'d_?\\'}},
-    ['ظ'] = {[default]={'z_?\\'}},  -- x/D_?\/ is rare enough not to be worth recording
-    ['غ'] = {[default]={'G'}},
-    ['ة'] = {[default]={'a', 'e_o'}, ['ِ']={'e_o'}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
+    ['ض'] = {[default]={'d' .. ipa.ph}},
+    ['ظ'] = {[default]={'z' .. ipa.ph}},  -- x/D_?\/ is rare enough not to be worth recording
+    ['غ'] = {[default]={ipa.gh}},
+    ['ة'] = {[default]={'a', ipa.e_o}, ['ِ']={ipa.e_o}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
 }
 
 
@@ -100,7 +95,11 @@ end
 
 local EMPHATICS = set({'ط', 'ص', 'ق', 'ض', 'ظ'})  -- these cause backing of alif
 local LOWERING_CONSONANTS = set({'ق', 'ر', 'ح', 'ع', 'خ', 'غ'})  -- these turn alif into /a/
-local IMPOSSIBLE_COMBINATIONS = {'qaː', 'ʔαː'}  -- to be pattern-matched
+local IMPOSSIBLE_COMBINATIONS = {
+    'qa' .. ipa.gem,
+    ipa.hamza .. ipa.alpha .. ipa.gem,
+    ipa.gem .. ipa.gem
+}  -- to be pattern-matched
 
 
 local function get_frame_args(frame)
@@ -131,7 +130,7 @@ local function determine_emphasis_level(c, chars, level)
     else
         if EMPHATICS[c] then
             level = 3
-            chars[1+#chars] = 'A'  -- α
+            chars[1+#chars] = ipa.alpha
         end
         if LOWERING_CONSONANTS[c] then
             level = 2
@@ -201,19 +200,20 @@ function exports.IPA(frame)
             if prev_char == '#' then  -- word boundary aka beginning of word
                 if verb_form == nil then
                     -- if it's a noun then word-initial hamza-less alif represents /ʔi/
-                    prev_output = {'(?i)'}  -- ʔi
+                    prev_output = {'(' .. ipa.hamza .. 'i)'}
                     -- if it's a verb then the same alif represents a word-initial consonant cluster in Levantine
                     -- meaning nothing is to be prepended
                 end
             else
                 local left_level, right_level, chars = determine_emphasis_environment(word, index)
-                local charset, chars = set(chars), {}
+                local charset = set(chars)
+                chars = {}
                 if right_level == 0 and left_level < 2 then
-                    charset['e_o'] = true -- e̞
-                    charset['{'] = true  -- æ
+                    charset[ipa.e_o] = true
+                    charset[ipa.ae] = true
                 end
                 for k, _ in pairs(charset) do
-                    chars[1 + #chars] = k .. ':'
+                    chars[1 + #chars] = k .. ipa.gem
                 end
                 prev_output = chars
             end
