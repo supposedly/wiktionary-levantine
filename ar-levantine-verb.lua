@@ -25,7 +25,7 @@ local default = false
     ['ز'] = {[default]={'z'}},
     ['ح'] = {[default]={'ħ'}},
     ['ط'] = {[default]={'tˤ'}},
-    ['ي'] = {[default]={'iː'}, ['#']={'y'}, ['ِ']={'iː'}, ['َ']={'ay', 'e̞ː'}},
+    ['ي'] = {[default]={'iː'}, ['#']={'j'}, ['ِ']={'iː'}, ['َ']={'ay', 'e̞ː'}},
     ['ك'] = {[default]={'k'}},
     ['ل'] = {[default]={'l'}},
     ['م'] = {[default]={'m'}},
@@ -66,7 +66,7 @@ local IPA_MAP = {
     ['ز'] = {[default]={'z'}},
     ['ح'] = {[default]={'X\\'}},
     ['ط'] = {[default]={'t_?\\'}},
-    ['ي'] = {[default]={'i:'}, ['#']={'y'}, ['ِ']={'i:'}, ['َ']={'ay', 'e_o:'}},
+    ['ي'] = {[default]={'i:'}, ['#']={'j'}, ['ِ']={'i:'}, ['َ']={'ay', 'e_o:'}},
     ['ك'] = {[default]={'k'}},
     ['ل'] = {[default]={'l'}},
     ['م'] = {[default]={'m'}},
@@ -174,15 +174,20 @@ end
 function exports.IPA(frame)
     local args = get_frame_args(frame)
     local word, verb_form = args[1], args[2]  -- verb form also tells us whether it's a verb or not
-    local possibilities, prev_char = {}, '#'
+    local possibilities, prev_char, prev_output = {}, '#', {}
     local index = 0
     for value in string.gmatch(word, "([%z\1-\127\194-\244][\128-\191]*)") do
         index = index + 1
         if IPA_MAP[value] ~= nil then
+            local appendee = prev_output
             if IPA_MAP[value][prev_char] ~= nil then
-                possibilities[1+#possibilities] = IPA_MAP[value][prev_char]
+                appendee = {}
+                prev_output = IPA_MAP[value][prev_char]
             else
-                possibilities[1+#possibilities] = IPA_MAP[value][default]
+                prev_output = IPA_MAP[value][default]
+            end
+            if #appendee > 0 then
+                possibilities[1 + #possibilities] = appendee
             end
         elseif value == 'ا' then
             if prev_char == '#' then  -- word boundary aka beginning of word
@@ -206,6 +211,9 @@ function exports.IPA(frame)
             end
         end
         prev_char = value
+    end
+    if #prev_output > 0 then
+        possibilities[1 + #possibilities] = prev_output
     end
     -- now go through all possibilities
     local final = copy_list(possibilities[1])
