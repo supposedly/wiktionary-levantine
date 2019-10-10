@@ -107,14 +107,12 @@ local function get_frame_args(frame)
 end
 
 
-local function str_ipairs(s)
-    local i, n = 0, #s
-    return function()
-        i = i + 1
-        if i <= n then
-            return i, s:sub(i, i)
-        end
+local function copy_list(t)
+    local new = {}
+    for i, v in ipairs(t) do
+        new[i] = v
     end
+    return new
 end
 
 
@@ -210,7 +208,7 @@ function exports.IPA(frame)
         prev_char = value
     end
     -- now go through all possibilities
-    local final = possibilities[1]
+    local final = copy_list(possibilities[1])
     for i = 2, #possibilities do
         branch(final, possibilities[i])
     end
