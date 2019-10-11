@@ -12,6 +12,7 @@ do
         gem = 'ː',
         tie='͡',
         ph='ˤ',
+        _o='̞',
         alpha='α',
         e_o='e̞',
         ae='æ',
@@ -28,6 +29,7 @@ do
         gem = ':',
         tie='',
         ph='_?\\',
+        _o = '_o',
         alpha='A',
         e_o='e_o',
         ae='{',
@@ -59,11 +61,11 @@ local IPA_MAP = {
     ['ج'] = {[default]={ipa.j, 'd' .. ipa.tie .. ipa.j}},
     ['د'] = {[default]={'d'}},
     ['ه'] = {[default]={'h'}},
-    ['و'] = {[default]={'u' .. ipa.gem}, ['#']={'w'}, ['ُ']={'u' .. ipa.gem}, ['ِ']={'u' .. ipa.gem}, ['َ']={'aw', 'o' .. ipa.gem}},
+    ['و'] = {[default]={'w'}, ['#']={'w'}, ['ُ']={'u' .. ipa.gem}, ['ِ']={'u' .. ipa.gem}, ['َ']={'aw', 'o' .. ipa.gem}},
     ['ز'] = {[default]={'z'}},
     ['ح'] = {[default]={ipa.heth}},
     ['ط'] = {[default]={'t' .. ipa.ph}},
-    ['ي'] = {[default]={'i' .. ipa.gem}, ['#']={'j'}, ['ِ']={'i' .. ipa.gem}, ['َ']={'aj', ipa.e_o .. ipa.gem}},
+    ['ي'] = {[default]={'j'}, ['#']={'j'}, ['ِ']={'i' .. ipa.gem}, ['َ']={'aj', ipa.e_o .. ipa.gem}},
     ['ك'] = {[default]={'k'}},
     ['ل'] = {[default]={'l'}},
     ['م'] = {[default]={'m'}},
@@ -95,12 +97,16 @@ end
 
 local EMPHATICS = set({'ط', 'ص', 'ق', 'ض', 'ظ'})  -- these cause backing of alif
 local LOWERING_CONSONANTS = set({'ق', 'ر', 'ح', 'ع', 'خ', 'غ'})  -- these turn alif into /a/
-local IMPOSSIBLE_COMBINATIONS = {
-    'qa' .. ipa.gem,
-    ipa.hamza .. ipa.alpha .. ipa.gem,
-    ipa.gem .. ipa.gem
-}  -- to be pattern-matched
-
+local IMPOSSIBLE_COMBINATIONS
+do
+    local vowel_string = '[a' .. ipa.ae .. ipa.alpha .. 'eiou]' .. ipa.gem .. '?'
+    IMPOSSIBLE_COMBINATIONS = {
+        -- to be pattern-matched
+        'qa' .. ipa.gem,
+        ipa.gem .. ipa.gem,
+        vowel_string .. vowel_string
+    }
+end
 
 local function get_frame_args(frame)
     return frame:getParent().args
@@ -168,12 +174,31 @@ local function branch(t, branches)
     if n_branches == 0 then
         return
     end
+    -- join each branch to each current element
     for i = 1, size do
         for j = 2, n_branches do
             t[1+#t] = t[i] .. branches[j]
         end
         t[i] = t[i] .. first_branch
     end
+    -- prune results with impossible combinations
+    for i = #t, 1, -1 do
+        local v = t[i]
+        for _, pattern in ipairs(IMPOSSIBLE_COMBINATIONS) do
+            if v:match(pattern) then
+                table.remove(t, i)
+            end
+        end
+    end
+end
+
+
+local function split_unicode(word)
+    local t = {}
+    for v in word:gmatch("([%z\1-\127\194-\244][\128-\191]*)") do
+        t[1 + #t] = v
+    end
+    return t, #t
 end
 
 
@@ -181,9 +206,8 @@ function exports.IPA(frame)
     local args = get_frame_args(frame)
     local word, verb_form = args[1], args[2]  -- verb form also tells us whether it's a verb or not
     local possibilities, prev_char, prev_output = {}, '#', {}
-    local index = 0
-    for value in string.gmatch(word, "([%z\1-\127\194-\244][\128-\191]*)") do
-        index = index + 1
+    local split, end_index = split_unicode(word)
+    for index, value in ipairs(split) do
         if IPA_MAP[value] ~= nil then
             local appendee = prev_output
             if IPA_MAP[value][prev_char] ~= nil then
@@ -210,8 +234,13 @@ function exports.IPA(frame)
                     charset[ipa.e_o] = true
                     charset[ipa.ae] = true
                 end
+                local gem_or_no_gem = ipa.gem
+                if index == end_index then
+                    charset[ipa.e_o] = nil
+                    gem_or_no_gem = ''
+                end
                 for k, _ in pairs(charset) do
-                    chars[1 + #chars] = k .. ipa.gem
+                    chars[1 + #chars] = k .. gem_or_no_gem
                 end
                 prev_output = chars
             end
