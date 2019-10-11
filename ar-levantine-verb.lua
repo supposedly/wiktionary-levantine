@@ -76,20 +76,20 @@ local IPA_MAP = {
     ['ر'] = {[default]={ipa.r}},
     ['ش'] = {[default]={ipa.sh}},
     ['ت'] = {[default]={'t'}},
-    ['ث'] = {[default]={'s'}},  -- /T/ is rare enough not to be worth recording. /t/ should be written ت
+    ['ث'] = {[default]={'s'}},  -- /θ/ is rare/marked enough not to be worth recording. /t/ should be written ت
     ['خ'] = {[default]={'x'}},
-    ['ذ'] = {[default]={'z'}},  -- /D/ is rare enough not to be worth recording. /d/ should be written د
+    ['ذ'] = {[default]={'z'}},  -- /ð/ is rare/marked enough not to be worth recording. /d/ should be written د
     ['ض'] = {[default]={'d' .. ipa.ph}},
-    ['ظ'] = {[default]={'z' .. ipa.ph}},  -- x/D_?\/ is rare enough not to be worth recording
+    ['ظ'] = {[default]={'z' .. ipa.ph}},  -- /ðˤ/ is rare/marked enough not to be worth recording
     ['غ'] = {[default]={ipa.gh}},
     ['ة'] = {[default]={'a', ipa.e_o}, ['ِ']={ipa.e_o}, ['َ']={'a'}},  -- probably not worth breaking our whole system to allow pronunciation to be inferred, just make the user specify it
 }
 
 
 local function set(list)
-    local set = {}
-    for _, l in ipairs(list) do set[l] = true end
-    return set
+    local s = {}
+    for _, l in ipairs(list) do s[l] = true end
+    return s
 end
 
 
@@ -192,9 +192,7 @@ function exports.IPA(frame)
             else
                 prev_output = IPA_MAP[value][default]
             end
-            if #appendee > 0 then
-                possibilities[1 + #possibilities] = appendee
-            end
+            possibilities[1 + #possibilities] = appendee
         elseif value == 'ا' then
             possibilities[1 + #possibilities] = prev_output
             if prev_char == '#' then  -- word boundary aka beginning of word
@@ -220,13 +218,16 @@ function exports.IPA(frame)
         end
         prev_char = value
     end
-    if #prev_output > 0 then
-        possibilities[1 + #possibilities] = prev_output
-    end
+    possibilities[1 + #possibilities] = prev_output
     -- now go through all possibilities
-    local final = copy_list(possibilities[1])
-    for i = 2, #possibilities do
-        branch(final, possibilities[i])
+    local final = {}
+    while #final == 0 do
+        -- make sure first element isn't empty to have something to branch out of
+        -- if it is then keep going till we find one that's not
+        final = copy_list(table.remove(possibilities, 1))
+    end
+    for _, t in ipairs(possibilities) do
+        branch(final, t)
     end
     for i, v in ipairs(final) do
         -- TODO: INSERT VARIANT STRESS MARKERS RIGHT HERE
@@ -238,6 +239,7 @@ end
 
 function exports.conjuate(frame)
     local args = get_frame_args(frame)
+    root, pst_form, npst_form, imperative_root = args[1], args[2], args[3], args[4]
 end
 
 
