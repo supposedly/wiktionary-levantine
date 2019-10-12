@@ -47,9 +47,9 @@ end
 
 local IPA_MAP = {
     -- ا should be processed specially
-    ['َ'] = {[default]={'a'}},
-    ['ِ'] = {[default]={'i'}},
-    ['ُ'] = {[default]={'u'}},
+    ['َ'] = {[default]={'a'}, ['ِ']={'i', 'a'}, ['ُ']={'u', 'a'}},
+    ['ِ'] = {[default]={'i'}, ['ُ']={'u', 'i'}, ['َ']={'a', 'i'}},
+    ['ُ'] = {[default]={'u'}, ['ِ']={'i', 'u'}, ['َ']={'a', 'u'}},
     ['ّ'] = {[default]={ipa.gem}},
     ['ئ'] = {[default]={ipa.hamza}},
     ['ؤ'] = {[default]={ipa.hamza}},
