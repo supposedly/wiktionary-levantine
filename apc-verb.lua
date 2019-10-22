@@ -47,6 +47,7 @@ end
 
 local IPA_MAP = {
     -- ا should be processed specially
+    ['ـ']={[default]={'-'}},  -- extender should be used at affix boundaries
     ['َ'] = {[default]={'a'}, ['ِ']={'i', 'a'}, ['ُ']={'u', 'a'}},
     ['ِ'] = {[default]={'i'}, ['ُ']={'u', 'i'}, ['َ']={'a', 'i'}},
     ['ُ'] = {[default]={'u'}, ['ِ']={'i', 'u'}, ['َ']={'a', 'u'}},
@@ -73,7 +74,7 @@ local IPA_MAP = {
     ['س'] = {[default]={'s'}},
     ['ع'] = {[default]={ipa.ayn}},
     ['ف'] = {[default]={'f'}},
-    ['ص'] = {[default]={'s' .. ipa.gem}},
+    ['ص'] = {[default]={'s' .. ipa.ph}},
     ['ق'] = {[default]={ipa.hamza, 'q'}},
     ['ر'] = {[default]={ipa.r}},
     ['ش'] = {[default]={ipa.sh}},
@@ -108,7 +109,7 @@ do
     }
 end
 
-local function get_frame_args(frame)
+function get_frame_args(frame)
     return frame:getParent().args
 end
 
@@ -148,24 +149,36 @@ end
 
 
 local function determine_emphasis_environment(word, alif_index)
-    local left_level, right_level, chars = 0, 0, {}, {}
-    local i = 1
+    local level_before_alif, level_after_alif, chars = 0, 0, {}
+    local i, reached_alif = 1, false
     for v in string.gmatch(word, "([%z\1-\127\194-\244][\128-\191]*)") do
+        if i == alif_index then
+            reached_alif = true
+            --[[
+                I can't just break because I need `i` to be at the last index of
+                the word, as #word of course won't work. I could probably use
+                string.find(unicode pattern) to calculate word length but I think
+                since we're already in gmatch here this'll be quicker
+                (rip no `continue`)
+            --]]
+        end
+        if not reached_alif then
+            level_before_alif = determine_emphasis_level(v, chars, level_before_alif)
+        end
         i = i + 1
+    end
+    -- lua strings aren't unicode-aware so reverse gmatching is a bit hacky:
+    -- first reverse the string to be iterated through,
+    -- then reverse the gmatch pattern to account for that,
+    -- then re-reverse each individual result
+    for v in string.gmatch(word:reverse(), "([\128-\191]-[%z\1-\127\194-\244])") do
         if i == alif_index then
             break
         end
-        left_level = determine_emphasis_level(v, chars, left_level)
-    end
-    i = #word
-    for v in string.gmatch(word, "([%z\1-\127\194-\244][\128-\191]*)") do
         i = i - 1
-        if i == alif_index then
-            break
-        end
-        right_level = determine_emphasis_level(v, chars, right_level)
+        level_after_alif = determine_emphasis_level(v:reverse(), chars, level_after_alif)
     end
-    return left_level, right_level, chars
+    return level_before_alif, level_after_alif, chars
 end
 
 
@@ -227,12 +240,16 @@ function exports.IPA(frame)
                     -- meaning nothing is to be prepended
                 end
             else
-                local left_level, right_level, chars = determine_emphasis_environment(word, index)
+                local level_before_alif, level_after_alif, chars = determine_emphasis_environment(word, index)
                 local charset = set(chars)
+                print(level_before_alif, level_after_alif)
                 chars = {}
-                if right_level == 0 and left_level < 2 then
+                if level_after_alif == 0 and level_before_alif < 2 then
                     charset[ipa.e_o] = true
                     charset[ipa.ae] = true
+                elseif level_before_alif == 2 and level_after_alif < 2 then
+                    -- friggin lebanon
+                    charset[ipa.e_o] = true
                 end
                 local gem_or_no_gem = ipa.gem
                 if index == end_index then
